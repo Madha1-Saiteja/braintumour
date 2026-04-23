@@ -1,102 +1,101 @@
-import { CheckCircle2, AlertTriangle, TrendingUp, Sparkles } from "lucide-react";
-import { Card } from "@/components/ui/card";
+/**
+ * src/components/ClassificationResult.tsx  (UPDATED — uses real API data)
+ */
 
-interface ClassificationResultProps {
-  result: {
-    prediction: string;
-    confidence: number;
-    probabilities: { label: string; value: number }[];
-  } | null;
+import { BadgeCheck, TrendingUp, AlertCircle } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import type { ClassificationResult as ClassificationResultType } from "@/lib/api";
+
+const CLASS_META: Record<string, { label: string; color: string; bg: string }> = {
+  glioma:      { label: "Glioma",      color: "text-red-600",    bg: "bg-red-50 border-red-200"    },
+  meningioma:  { label: "Meningioma",  color: "text-orange-600", bg: "bg-orange-50 border-orange-200" },
+  pituitary:   { label: "Pituitary",   color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-200" },
+  notumor:     { label: "No Tumor",    color: "text-green-600",  bg: "bg-green-50 border-green-200" },
+};
+
+interface Props {
+  classification: ClassificationResultType;
+  inferenceTimeMs: number;
 }
 
-const tumorGradients: Record<string, string> = {
-  "Glioma": "from-red-500 to-orange-500",
-  "Meningioma": "from-purple-500 to-pink-500",
-  "Pituitary": "from-cyan-500 to-blue-500",
-  "No Tumor": "from-green-500 to-emerald-500",
-};
-
-const tumorBgColors: Record<string, string> = {
-  "Glioma": "bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/30",
-  "Meningioma": "bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30",
-  "Pituitary": "bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-cyan-500/30",
-  "No Tumor": "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30",
-};
-
-const ClassificationResult = ({ result }: ClassificationResultProps) => {
-  if (!result) {
-    return (
-      <Card className="p-6 bg-gradient-to-br from-white to-accent/5 border-accent/20 shadow-lg h-full flex items-center justify-center">
-        <div className="text-center text-muted-foreground">
-          <div className="w-16 h-16 rounded-2xl gradient-cyan-purple mx-auto mb-4 flex items-center justify-center opacity-30">
-            <TrendingUp className="w-8 h-8 text-white" />
-          </div>
-          <p className="text-sm">Upload and analyze an MRI to see classification results</p>
-        </div>
-      </Card>
-    );
-  }
-
-  const isNoTumor = result.prediction === "No Tumor";
+const ClassificationResult = ({ classification, inferenceTimeMs }: Props) => {
+  const meta = CLASS_META[classification.class_name] ?? {
+    label: classification.class_name,
+    color: "text-primary",
+    bg: "bg-primary/5 border-primary/20",
+  };
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-white to-primary/5 border-primary/20 shadow-lg shadow-primary/10 animate-fade-in overflow-hidden relative">
-      {/* Background decoration */}
-      <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-accent/10 to-transparent rounded-tr-full" />
-      
-      <div className="flex items-center gap-3 mb-6 relative">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${isNoTumor ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gradient-to-r from-orange-500 to-red-500"}`}>
-          {isNoTumor ? (
-            <CheckCircle2 className="w-6 h-6 text-white" />
-          ) : (
-            <AlertTriangle className="w-6 h-6 text-white" />
-          )}
+    <Card className="p-6 bg-gradient-to-br from-white to-blue-500/5 border-blue-500/20 shadow-lg">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
+          <BadgeCheck className="w-6 h-6 text-white" />
         </div>
         <div>
           <h2 className="font-display font-semibold text-lg text-gradient">Classification Result</h2>
-          <p className="text-sm text-muted-foreground">CNN Model Prediction</p>
+          <p className="text-sm text-muted-foreground">EfficientNet-B0 Prediction</p>
         </div>
-        <Sparkles className="w-5 h-5 text-accent absolute top-0 right-0 animate-pulse" />
+        <span className="ml-auto text-xs text-muted-foreground">{inferenceTimeMs} ms</span>
       </div>
 
-      {/* Main Prediction */}
-      <div className={`p-5 rounded-2xl border-2 mb-6 ${tumorBgColors[result.prediction] || "bg-muted"} relative overflow-hidden`}>
-        <div className="absolute top-0 right-0 w-24 h-24 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="flex items-center justify-between relative">
+      {/* Primary result */}
+      <div className={`rounded-2xl border p-5 mb-5 ${meta.bg}`}>
+        <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Detected</p>
-            <p className={`text-2xl font-display font-bold bg-gradient-to-r ${tumorGradients[result.prediction]} bg-clip-text text-transparent`}>{result.prediction}</p>
+            <p className="text-xs text-muted-foreground mb-1">Detected Condition</p>
+            <p className={`text-2xl font-bold ${meta.color}`}>{meta.label}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Confidence</p>
-            <p className="text-3xl font-display font-bold text-gradient">{result.confidence}%</p>
+            <p className="text-xs text-muted-foreground mb-1">Confidence</p>
+            <p className={`text-2xl font-bold ${meta.color}`}>
+              {(classification.confidence * 100).toFixed(1)}%
+            </p>
           </div>
+        </div>
+
+        {/* Confidence bar */}
+        <div className="mt-3 h-2 rounded-full bg-white/60">
+          <div
+            className={`h-full rounded-full transition-all duration-700 ${
+              classification.has_tumor ? "bg-red-400" : "bg-green-400"
+            }`}
+            style={{ width: `${classification.confidence * 100}%` }}
+          />
         </div>
       </div>
 
-      {/* Probability Distribution */}
-      <div className="relative">
-        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full gradient-primary" />
-          Probability Distribution
-        </h3>
-        <div className="space-y-3">
-          {result.probabilities.map((prob) => (
-            <div key={prob.label}>
-              <div className="flex items-center justify-between text-sm mb-1.5">
-                <span className="text-muted-foreground font-medium">{prob.label}</span>
-                <span className="font-bold text-foreground">{prob.value.toFixed(1)}%</span>
-              </div>
-              <div className="relative h-3 bg-muted/50 rounded-full overflow-hidden">
-                <div
-                  className={`absolute inset-y-0 left-0 rounded-full transition-all duration-1000 bg-gradient-to-r ${tumorGradients[prob.label] || "from-primary to-accent"}`}
-                  style={{ width: `${prob.value}%` }}
-                />
-              </div>
-            </div>
-          ))}
+      {/* All class probabilities */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="w-4 h-4 text-muted-foreground" />
+          <p className="text-sm font-medium text-muted-foreground">All Class Probabilities</p>
         </div>
+        {Object.entries(classification.probabilities)
+          .sort(([, a], [, b]) => b - a)
+          .map(([cls, prob]) => {
+            const m = CLASS_META[cls];
+            return (
+              <div key={cls} className="flex items-center gap-3">
+                <span className="w-28 text-xs text-muted-foreground capitalize">{m?.label ?? cls}</span>
+                <div className="flex-1 h-2 rounded-full bg-muted/50">
+                  <div
+                    className={`h-full rounded-full ${m?.color.replace("text-", "bg-") ?? "bg-primary"} opacity-70`}
+                    style={{ width: `${prob * 100}%` }}
+                  />
+                </div>
+                <span className="w-12 text-xs text-right font-medium">{(prob * 100).toFixed(1)}%</span>
+              </div>
+            );
+          })}
       </div>
+
+      {classification.has_tumor && (
+        <div className="mt-4 flex items-center gap-2 text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded-xl p-3">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          Tumor detected — segmentation and clinical report generated below.
+        </div>
+      )}
     </Card>
   );
 };

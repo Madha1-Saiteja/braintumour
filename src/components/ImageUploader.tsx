@@ -1,3 +1,12 @@
+/**
+ * src/components/ImageUploader.tsx  (UPDATED — wired to backend)
+ *
+ * Changes from original:
+ *  - Accepts a `file` prop so the parent can hold the raw File object
+ *  - Calls onFileSelect(file) instead of onImageUpload(dataUrl)
+ *  - Keeps the same visual design untouched
+ */
+
 import { useState, useCallback } from "react";
 import { Upload, Image, Loader2, Brain, Sparkles, Scan } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,45 +14,52 @@ import { Card } from "@/components/ui/card";
 import doctorGestureImage from "@/assets/doctor-gesture.jpg";
 
 interface ImageUploaderProps {
-  onImageUpload: (image: string) => void;
+  /** Called with both the preview data-URL AND the raw File */
+  onFileSelect: (dataUrl: string, file: File) => void;
   onAnalyze: () => void;
   isAnalyzing: boolean;
-  uploadedImage: string | null;
+  uploadedImage: string | null;   // preview data-URL (unchanged)
 }
 
-const ImageUploader = ({ onImageUpload, onAnalyze, isAnalyzing, uploadedImage }: ImageUploaderProps) => {
+const ImageUploader = ({
+  onFileSelect,
+  onAnalyze,
+  isAnalyzing,
+  uploadedImage,
+}: ImageUploaderProps) => {
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) {
+  const processFile = useCallback(
+    (file: File) => {
+      if (!file.type.startsWith("image/")) return;
       const reader = new FileReader();
       reader.onload = (e) => {
-        onImageUpload(e.target?.result as string);
+        onFileSelect(e.target?.result as string, file);
       };
       reader.readAsDataURL(file);
-    }
-  }, [onImageUpload]);
+    },
+    [onFileSelect]
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const file = e.dataTransfer.files[0];
+      if (file) processFile(file);
+    },
+    [processFile]
+  );
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        onImageUpload(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (file) processFile(file);
   };
 
   return (
     <Card className="p-6 bg-gradient-to-br from-white to-primary/5 border-primary/20 shadow-lg shadow-primary/10 overflow-hidden relative">
-      {/* Background decoration */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-accent/10 to-transparent rounded-bl-full" />
-      
+
       <div className="flex items-center gap-3 mb-6 relative">
         <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
           <Upload className="w-6 h-6 text-white" />
@@ -60,8 +76,8 @@ const ImageUploader = ({ onImageUpload, onAnalyze, isAnalyzing, uploadedImage }:
         onDragLeave={() => setIsDragging(false)}
         className={`
           relative border-2 border-dashed rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden
-          ${isDragging 
-            ? "border-primary bg-gradient-to-br from-primary/10 to-accent/10 scale-[1.02]" 
+          ${isDragging
+            ? "border-primary bg-gradient-to-br from-primary/10 to-accent/10 scale-[1.02]"
             : "border-primary/30 hover:border-primary/60 hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5"
           }
           ${uploadedImage ? "p-4" : "p-8"}
@@ -73,7 +89,7 @@ const ImageUploader = ({ onImageUpload, onAnalyze, isAnalyzing, uploadedImage }:
           onChange={handleFileInput}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
         />
-        
+
         {uploadedImage ? (
           <div className="relative">
             <img
@@ -100,7 +116,6 @@ const ImageUploader = ({ onImageUpload, onAnalyze, isAnalyzing, uploadedImage }:
           </div>
         ) : (
           <div className="text-center relative">
-            {/* Background image hint */}
             <div className="absolute inset-0 opacity-10">
               <img src={doctorGestureImage} alt="" className="w-full h-full object-cover rounded-xl" />
             </div>

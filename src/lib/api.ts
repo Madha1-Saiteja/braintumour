@@ -51,16 +51,16 @@ export interface HealthStatus {
 
 /**
  * POST /analyze
- * Sends an MRI image file and optional patient ID for full pipeline analysis.
+ * Sends an MRI image file and optional language for full pipeline analysis.
  */
 export async function analyzeImage(
   file: File,
-  patientId: string = "N/A"
+  language: string = "en"
 ): Promise<AnalysisResponse> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const url = `${BASE_URL}/analyze?patient_id=${encodeURIComponent(patientId)}`;
+  const url = `${BASE_URL}/analyze?language=${encodeURIComponent(language)}`;
 
   const response = await fetch(url, {
     method: "POST",

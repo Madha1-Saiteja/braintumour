@@ -3,7 +3,11 @@
  * Centralized API client for X-Brain backend (FastAPI on port 8000)
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD
+    ? "https://braintumour-updated.onrender.com"
+    : "http://localhost:8000");
 
 // ── Response Types (mirror backend Pydantic models) ──────────────────────────
 

@@ -1,9 +1,9 @@
 /**
  * src/lib/api.ts
- * Centralized API client for X-Brain backend (FastAPI on port 8000)
+ * Centralized API client for the X-Brain backend.
  */
 
-const BASE_URL =
+export const BASE_URL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.PROD
     ? "https://braintumour-updated.onrender.com"
@@ -81,7 +81,9 @@ export async function analyzeImage(
  */
 export async function checkHealth(): Promise<HealthStatus> {
   const response = await fetch(`${BASE_URL}/health`);
-  if (!response.ok) throw new Error("Backend unreachable");
+  if (!response.ok) {
+    throw new Error(`Could not reach the X-Brain API at ${BASE_URL}.`);
+  }
   return response.json() as Promise<HealthStatus>;
 }
 

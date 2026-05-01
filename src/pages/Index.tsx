@@ -24,6 +24,7 @@ import {
   analyzeImage,
   checkHealth,
   base64ToImageSrc,
+  BASE_URL,
   type AnalysisResponse,
   type HealthStatus,
 } from "@/lib/api";
@@ -95,10 +96,13 @@ export default function Index() {
   useEffect(() => {
     checkHealth()
       .then(setHealth)
-      .catch(() =>
+      .catch((err: unknown) =>
         toast({
           title: "Backend unreachable",
-          description: "Make sure the X-Brain API is running on port 8000.",
+          description:
+            err instanceof Error
+              ? err.message
+              : `Could not connect to the X-Brain API at ${BASE_URL}.`,
           variant: "destructive",
         })
       );

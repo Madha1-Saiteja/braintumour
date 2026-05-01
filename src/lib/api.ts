@@ -1,9 +1,9 @@
 /**
  * src/lib/api.ts
- * Centralized API client for X-Brain backend (FastAPI on port 8000)
+ * Centralized API client for the X-Brain backend.
  */
 
-const BASE_URL =
+export const BASE_URL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.PROD
     ? "https://braintumour-updated.onrender.com"
@@ -51,16 +51,16 @@ export interface HealthStatus {
 
 /**
  * POST /analyze
- * Sends an MRI image file and optional patient ID for full pipeline analysis.
+ * Sends an MRI image file and optional language for full pipeline analysis.
  */
 export async function analyzeImage(
   file: File,
-  patientId: string = "N/A"
+  language: string = "en"
 ): Promise<AnalysisResponse> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const url = `${BASE_URL}/analyze?patient_id=${encodeURIComponent(patientId)}`;
+  const url = `${BASE_URL}/analyze?language=${encodeURIComponent(language)}`;
 
   const response = await fetch(url, {
     method: "POST",
@@ -81,7 +81,9 @@ export async function analyzeImage(
  */
 export async function checkHealth(): Promise<HealthStatus> {
   const response = await fetch(`${BASE_URL}/health`);
-  if (!response.ok) throw new Error("Backend unreachable");
+  if (!response.ok) {
+    throw new Error(`Could not reach the X-Brain API at ${BASE_URL}.`);
+  }
   return response.json() as Promise<HealthStatus>;
 }
 
